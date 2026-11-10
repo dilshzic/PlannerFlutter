@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="narwhal_primary">#009688</color>
+    <color name="narwhal_primary_dark">#00796B</color>
+    <color name="narwhal_primary_container">#E0F2F1</color>
+    <color name="narwhal_on_primary_container">#004D40</color>
+    <color name="narwhal_surface">#FFFFFF</color>
+    <color name="narwhal_surface_container">#F3F4F6</color>
+    <color name="narwhal_card_bg">#FFFFFF</color>
+    <color name="narwhal_card_border">#E5E7EB</color>
+    <color name="narwhal_text_primary">#1F2937</color>
+    <color name="narwhal_text_secondary">#6B7280</color>
+    <color name="narwhal_text_muted">#9CA3AF</color>
+    <color name="narwhal_divider">#E5E7EB</color>
+
+    <!-- Workload & Priority Colors -->
+    <color name="workload_recovery">#EAB308</color>
+    <color name="workload_grind">#22C55E</color>
+    <color name="workload_casualty">#EF4444</color>
+    <color name="priority_high">#EF4444</color>
+    <color name="priority_medium">#F59E0B</color>
+    <color name="priority_low">#10B981</color>
+	<color name="ic_launcher_background">#ffffff</color>
+</resources>

@@ -25,8 +25,9 @@ class AppDatabase {
 
     return await openDatabase(
       path,
-      version: 1,
+      version: 4,
       onCreate: _createDB,
+      onUpgrade: _onUpgrade,
     );
   }
 
@@ -42,6 +43,29 @@ CREATE TABLE categories (
 ''');
 
     await db.execute('''
+CREATE TABLE projects (
+  id TEXT PRIMARY KEY,
+  title TEXT NOT NULL,
+  description TEXT NOT NULL,
+  notes TEXT NOT NULL DEFAULT '',
+  colorHex TEXT,
+  userId TEXT,
+  updatedAt INTEGER NOT NULL
+)
+''');
+
+    await db.execute('''
+CREATE TABLE project_phases (
+  id TEXT PRIMARY KEY,
+  projectId TEXT NOT NULL,
+  name TEXT NOT NULL,
+  orderIndex INTEGER NOT NULL,
+  isCompleted INTEGER NOT NULL,
+  FOREIGN KEY (projectId) REFERENCES projects (id) ON DELETE CASCADE
+)
+''');
+
+    await db.execute('''
 CREATE TABLE tasks (
   id TEXT PRIMARY KEY,
   title TEXT NOT NULL,
@@ -49,7 +73,10 @@ CREATE TABLE tasks (
   categoryId TEXT NOT NULL,
   priority INTEGER NOT NULL,
   parentId TEXT,
+  projectId TEXT,
+  phaseId TEXT,
   isZone INTEGER NOT NULL,
+  colorHex TEXT,
   scheduledDate INTEGER,
   startDateTime INTEGER,
   endDateTime INTEGER,
@@ -63,7 +90,9 @@ CREATE TABLE tasks (
   totalBlocksSpent INTEGER NOT NULL,
   userId TEXT,
   updatedAt INTEGER NOT NULL,
-  FOREIGN KEY (parentId) REFERENCES tasks (id) ON DELETE CASCADE
+  FOREIGN KEY (parentId) REFERENCES tasks (id) ON DELETE CASCADE,
+  FOREIGN KEY (projectId) REFERENCES projects (id) ON DELETE SET NULL,
+  FOREIGN KEY (phaseId) REFERENCES project_phases (id) ON DELETE SET NULL
 )
 ''');
 
@@ -80,6 +109,48 @@ CREATE TABLE time_logs (
 ''');
 
     await db.execute('CREATE INDEX index_tasks_parentId ON tasks(parentId)');
+    await db.execute('CREATE INDEX index_tasks_projectId ON tasks(projectId)');
+  }
+
+  Future _onUpgrade(Database db, int oldVersion, int newVersion) async {
+    if (oldVersion < 2) {
+      // Migration to v2 (Projects)
+      await db.execute('ALTER TABLE tasks ADD COLUMN projectId TEXT');
+      await db.execute('ALTER TABLE tasks ADD COLUMN phaseId TEXT');
+      
+      await db.execute('''
+CREATE TABLE projects (
+  id TEXT PRIMARY KEY,
+  title TEXT NOT NULL,
+  description TEXT NOT NULL,
+  colorHex TEXT,
+  userId TEXT,
+  updatedAt INTEGER NOT NULL
+)
+''');
+
+      await db.execute('''
+CREATE TABLE project_phases (
+  id TEXT PRIMARY KEY,
+  projectId TEXT NOT NULL,
+  name TEXT NOT NULL,
+  orderIndex INTEGER NOT NULL,
+  isCompleted INTEGER NOT NULL,
+  FOREIGN KEY (projectId) REFERENCES projects (id) ON DELETE CASCADE
+)
+''');
+      await db.execute('CREATE INDEX index_tasks_projectId ON tasks(projectId)');
+    }
+    
+    if (oldVersion < 3) {
+      // Migration to v3 (Task Color)
+      await db.execute('ALTER TABLE tasks ADD COLUMN colorHex TEXT');
+    }
+
+    if (oldVersion < 4) {
+      // Migration to v4 (Project Notes)
+      await db.execute("ALTER TABLE projects ADD COLUMN notes TEXT NOT NULL DEFAULT ''");
+    }
   }
 
   Future close() async {

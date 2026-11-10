@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Narwhal</string>
+    <string name="app_short_name">Narwhal</string>
+
+    <!-- Widget Labels (Displayed in Android Widget Picker) -->
+    <string name="widget_today_tasks_label">Today\'s Agenda</string>
+    <string name="widget_today_tasks_description">Interactive list of today\'s tasks and priorities with quick completion toggle</string>
+
+    <string name="widget_daily_summary_label">Daily Summary</string>
+    <string name="widget_daily_summary_description">Overview of today\'s task progress, workload status, and total focus time</string>
+
+    <string name="widget_quick_actions_label">Quick Actions</string>
+    <string name="widget_quick_actions_description">One-tap shortcuts to quickly create tasks, open scratchpad, or start focus mode</string>
+
+    <string name="widget_event_countdown_label">Event Countdown</string>
+    <string name="widget_event_countdown_description">Live hour counter and countdown to your next upcoming event, exam, or deadline</string>
+
+    <string name="widget_calendar_label">Monthly Calendar</string>
+    <string name="widget_calendar_description">Full monthly calendar view with event indicators and interactive month navigation</string>
+</resources>

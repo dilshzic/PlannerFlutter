@@ -1,6 +1,6 @@
-# planner
+# Narwhal : The Smart Planner
 
-A new Flutter project.
+Narwhal is an intelligent, cross-platform productivity and task management application designed for seamless scheduling, time blocking, and AI-assisted task workflows.
 
 ## Getting Started
 

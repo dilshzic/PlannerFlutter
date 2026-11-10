@@ -1,0 +1,119 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/widget_quick_root"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="horizontal"
+    android:background="@drawable/widget_card_background"
+    android:padding="8dp"
+    android:gravity="center_vertical">
+
+    <!-- Left Status Section -->
+    <LinearLayout
+        android:id="@+id/btn_quick_open_app"
+        android:layout_width="0dp"
+        android:layout_height="match_parent"
+        android:layout_weight="1.2"
+        android:orientation="vertical"
+        android:gravity="center_vertical"
+        android:paddingStart="8dp">
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Narwhal"
+            android:textColor="@color/narwhal_primary"
+            android:textSize="14sp"
+            android:textStyle="bold" />
+
+        <TextView
+            android:id="@+id/tv_quick_pending_count"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="0 pending"
+            android:textColor="@color/narwhal_text_secondary"
+            android:textSize="11sp" />
+    </LinearLayout>
+
+    <!-- Action 1: Add Task -->
+    <LinearLayout
+        android:id="@+id/btn_action_add_task"
+        android:layout_width="0dp"
+        android:layout_height="match_parent"
+        android:layout_weight="1"
+        android:background="@drawable/widget_item_background"
+        android:orientation="vertical"
+        android:gravity="center"
+        android:layout_marginHorizontal="3dp"
+        android:paddingVertical="4dp">
+
+        <ImageView
+            android:layout_width="18dp"
+            android:layout_height="18dp"
+            android:src="@drawable/ic_add"
+            android:tint="@color/narwhal_primary"
+            android:contentDescription="Add Task" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="+ Task"
+            android:textColor="@color/narwhal_text_primary"
+            android:textSize="10sp"
+            android:textStyle="bold" />
+    </LinearLayout>
+
+    <!-- Action 2: Note / Scratchpad -->
+    <LinearLayout
+        android:id="@+id/btn_action_note"
+        android:layout_width="0dp"
+        android:layout_height="match_parent"
+        android:layout_weight="1"
+        android:background="@drawable/widget_item_background"
+        android:orientation="vertical"
+        android:gravity="center"
+        android:layout_marginHorizontal="3dp"
+        android:paddingVertical="4dp">
+
+        <ImageView
+            android:layout_width="18dp"
+            android:layout_height="18dp"
+            android:src="@drawable/ic_note"
+            android:contentDescription="Scratchpad" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Note"
+            android:textColor="@color/narwhal_text_primary"
+            android:textSize="10sp"
+            android:textStyle="bold" />
+    </LinearLayout>
+
+    <!-- Action 3: Focus -->
+    <LinearLayout
+        android:id="@+id/btn_action_focus"
+        android:layout_width="0dp"
+        android:layout_height="match_parent"
+        android:layout_weight="1"
+        android:background="@drawable/widget_item_background"
+        android:orientation="vertical"
+        android:gravity="center"
+        android:layout_marginHorizontal="3dp"
+        android:paddingVertical="4dp">
+
+        <ImageView
+            android:layout_width="18dp"
+            android:layout_height="18dp"
+            android:src="@drawable/ic_focus"
+            android:contentDescription="Focus" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Focus"
+            android:textColor="@color/narwhal_text_primary"
+            android:textSize="10sp"
+            android:textStyle="bold" />
+    </LinearLayout>
+</LinearLayout>

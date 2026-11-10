@@ -19,11 +19,60 @@ static void first_frame_cb(MyApplication* self, FlView* view) {
   gtk_widget_show(gtk_widget_get_toplevel(GTK_WIDGET(view)));
 }
 
+// Updates window icon adapting dynamically to dark or light desktop theme.
+static void update_window_icon(GtkWindow* window) {
+  GtkSettings* settings = gtk_settings_get_default();
+  gboolean prefer_dark = FALSE;
+  g_autofree gchar* theme_name = nullptr;
+  if (settings != nullptr) {
+    g_object_get(settings,
+                 "gtk-application-prefer-dark-theme", &prefer_dark,
+                 "gtk-theme-name", &theme_name,
+                 nullptr);
+  }
+
+  bool is_dark = prefer_dark ||
+                 (theme_name != nullptr &&
+                  (g_strrstr(theme_name, "dark") != nullptr ||
+                   g_strrstr(theme_name, "Dark") != nullptr ||
+                   g_strrstr(theme_name, "Nokto") != nullptr ||
+                   g_strrstr(theme_name, "Black") != nullptr ||
+                   g_strrstr(theme_name, "black") != nullptr));
+
+  const char* icon_filename = is_dark ? "app_icon_light.png" : "app_icon_dark.png";
+
+  g_autoptr(GError) icon_error = nullptr;
+  g_autofree gchar* exe_path = g_file_read_link("/proc/self/exe", nullptr);
+  if (exe_path != nullptr) {
+    g_autofree gchar* exe_dir = g_path_get_dirname(exe_path);
+    g_autofree gchar* icon_path = g_build_filename(
+        exe_dir, "data", "flutter_assets", "assets", "icons", icon_filename, nullptr);
+    if (!g_file_test(icon_path, G_FILE_TEST_EXISTS)) {
+      icon_path = g_build_filename(
+          exe_dir, "data", "flutter_assets", "assets", "icons", "app_icon.png", nullptr);
+    }
+    gtk_window_set_icon_from_file(window, icon_path, &icon_error);
+  }
+  if (icon_error != nullptr) {
+    gtk_window_set_icon_name(window, APPLICATION_ID);
+  }
+}
+
 // Implements GApplication::activate.
 static void my_application_activate(GApplication* application) {
   MyApplication* self = MY_APPLICATION(application);
   GtkWindow* window =
       GTK_WINDOW(gtk_application_window_new(GTK_APPLICATION(application)));
+
+  // Adapt window icon based on active GTK/desktop theme (light vs dark)
+  update_window_icon(window);
+  GtkSettings* settings = gtk_settings_get_default();
+  if (settings != nullptr) {
+    g_signal_connect_swapped(settings, "notify::gtk-theme-name",
+                             G_CALLBACK(update_window_icon), window);
+    g_signal_connect_swapped(settings, "notify::gtk-application-prefer-dark-theme",
+                             G_CALLBACK(update_window_icon), window);
+  }
 
   // Use a header bar when running in GNOME as this is the common style used
   // by applications and is the setup most users will be using (e.g. Ubuntu
@@ -45,11 +94,11 @@ static void my_application_activate(GApplication* application) {
   if (use_header_bar) {
     GtkHeaderBar* header_bar = GTK_HEADER_BAR(gtk_header_bar_new());
     gtk_widget_show(GTK_WIDGET(header_bar));
-    gtk_header_bar_set_title(header_bar, "planner");
+    gtk_header_bar_set_title(header_bar, "Narwhal : The Smart Planner");
     gtk_header_bar_set_show_close_button(header_bar, TRUE);
     gtk_window_set_titlebar(window, GTK_WIDGET(header_bar));
   } else {
-    gtk_window_set_title(window, "planner");
+    gtk_window_set_title(window, "Narwhal : The Smart Planner");
   }
 
   gtk_window_set_default_size(window, 1280, 720);

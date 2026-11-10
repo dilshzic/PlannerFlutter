@@ -1,5 +1,5 @@
-import 'package:planner/data/database/app_database.dart';
-import 'package:planner/data/entity/category.dart';
+import 'package:narwhal/data/database/app_database.dart';
+import 'package:flutter_core_entities/category.dart';
 import 'package:sqflite/sqflite.dart';
 
 class CategoryRepository {

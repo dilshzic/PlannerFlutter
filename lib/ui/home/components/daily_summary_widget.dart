@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
-import '../../../data/entity/workload_level.dart';
+import 'package:flutter_core_entities/workload_level.dart';
+import 'package:narwhal/ui/components/narwhal_icon.dart';
 
 class DailySummaryWidget extends StatelessWidget {
   final int totalTasks;
@@ -147,7 +148,7 @@ class DailySummaryWidget extends StatelessWidget {
                     children: [
                       Row(
                         children: [
-                          Icon(Icons.auto_awesome, color: Theme.of(context).colorScheme.error, size: 18),
+                          const NarwhalIcon(size: 18),
                           const SizedBox(width: 8),
                           Text(
                             "Workload Alert",

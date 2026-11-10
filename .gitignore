@@ -1,6 +1,9 @@
 # Miscellaneous
 *.class
 *.log
+*.txt
+!README.md
+!integration_guide.md
 *.pyc
 *.swp
 .DS_Store
@@ -49,6 +52,11 @@ google-services.json
 GoogleService-Info.plist
 lib/firebase_options.dart
 *secret.dart
+
+# Environment variables
+.env
+.env.local
+.env.*.local
 
 # Original Native Project
 Planner/

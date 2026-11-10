@@ -1,23 +1,32 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:intl/intl.dart';
-import 'package:planner/ui/addedit/add_edit_task_view_model.dart';
-import 'package:planner/data/repository/task_repository.dart';
-import 'package:planner/data/entity/task.dart';
-import 'package:planner/logic/gemini_parser.dart';
+import 'package:narwhal/ui/addedit/add_edit_task_view_model.dart';
+import 'package:flutter_core_entities/task_node.dart';
+import 'package:narwhal/data/repository/task_node_repository.dart';
+import 'package:narwhal/services/ai/gemini_parser.dart';
+
+import 'components/section_card.dart';
+import 'components/project_selector.dart';
+import 'components/strategy_section.dart';
+import 'components/subtask_section.dart';
+import 'components/main_info_section.dart';
+import 'components/scheduling_section.dart';
+import 'components/notes_section.dart';
 
 class AddEditTaskScreen extends StatelessWidget {
-  final Task? task;
+  final TaskNode? task;
+  final String? initialTitle;
 
-  const AddEditTaskScreen({super.key, this.task});
+  const AddEditTaskScreen({super.key, this.task, this.initialTitle});
 
   @override
   Widget build(BuildContext context) {
     return ChangeNotifierProvider(
       create: (_) => AddEditTaskViewModel(
-        context.read<TaskRepository>(),
+        context.read<TaskNodeRepository>(),
         context.read<GeminiParser>(),
         task,
+        initialTitle: initialTitle,
       ),
       child: Consumer<AddEditTaskViewModel>(
         builder: (context, viewModel, child) {
@@ -25,84 +34,27 @@ class AddEditTaskScreen extends StatelessWidget {
             appBar: AppBar(
               title: Text(task == null ? 'Create Task' : 'Edit Task'),
               actions: [
-                TextButton(
-                  onPressed: () async {
-                    if (viewModel.title.trim().isEmpty) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text('Please enter a title')),
-                      );
-                      return;
-                    }
-                    await viewModel.saveTask();
-                    if (context.mounted) Navigator.pop(context);
-                  },
-                  child: const Text('SAVE', style: TextStyle(fontWeight: FontWeight.bold)),
-                ),
+                if (task != null)
+                  IconButton(
+                    icon: const Icon(Icons.drive_file_move_outline, color: Colors.blue),
+                    tooltip: 'Convert to Project',
+                    onPressed: () => _showConvertToProjectConfirm(context, viewModel),
+                  ),
+                if (task != null)
+                  IconButton(
+                    icon: const Icon(Icons.delete_outline, color: Colors.red),
+                    onPressed: () => _showDeleteConfirm(context, viewModel),
+                  ),
               ],
             ),
-            body: SingleChildScrollView(
-              padding: const EdgeInsets.all(16.0),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  _buildSectionCard(
-                    context,
-                    title: 'Main Info',
-                    child: Column(
-                      children: [
-                        TextField(
-                          onChanged: viewModel.onTitleChange,
-                          controller: TextEditingController(text: viewModel.title)
-                            ..selection = TextSelection.collapsed(offset: viewModel.title.length),
-                          decoration: const InputDecoration(
-                            hintText: 'Task Title',
-                            border: InputBorder.none,
-                          ),
-                          style: Theme.of(context).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.bold),
-                        ),
-                        const SizedBox(height: 16),
-                        _buildPrioritySelector(context, viewModel),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-                  _buildSectionCard(
-                    context,
-                    title: 'Scheduling',
-                    icon: Icons.event_note,
-                    child: Column(
-                      children: [
-                        _buildDateTimePicker(context, viewModel),
-                        const Divider(),
-                        _buildDurationSlider(context, viewModel),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-                  _buildSectionCard(
-                    context,
-                    title: 'Notes',
-                    icon: Icons.description,
-                    child: TextField(
-                      onChanged: viewModel.onDescriptionChange,
-                      controller: TextEditingController(text: viewModel.description)
-                        ..selection = TextSelection.collapsed(offset: viewModel.description.length),
-                      maxLines: 5,
-                      decoration: const InputDecoration(
-                        hintText: 'Add some details...',
-                        border: InputBorder.none,
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-                  _buildSectionCard(
-                    context,
-                    title: 'Checklist',
-                    icon: Icons.list,
-                    child: _buildSubtaskSection(context, viewModel),
-                  ),
-                ],
-              ),
+            body: LayoutBuilder(
+              builder: (context, constraints) {
+                if (constraints.maxWidth >= 900) {
+                  return _buildWideLayout(context, viewModel);
+                } else {
+                  return _buildNarrowLayout(context, viewModel);
+                }
+              },
             ),
           );
         },
@@ -110,163 +62,181 @@ class AddEditTaskScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildSubtaskSection(BuildContext context, AddEditTaskViewModel viewModel) {
-    final TextEditingController subtaskController = TextEditingController();
-
-    return Column(
-      children: [
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            const Text("Subtasks & Checklist", style: TextStyle(fontWeight: FontWeight.bold)),
-            TextButton.icon(
-              onPressed: viewModel.isGeneratingChecklist ? null : viewModel.generateAIChecklist,
-              icon: viewModel.isGeneratingChecklist
-                  ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2))
-                  : const Icon(Icons.auto_awesome, size: 18),
-              label: const Text("AI Break down"),
-            ),
-          ],
-        ),
-        Row(
-          children: [
-            Expanded(
-              child: TextField(
-                controller: subtaskController,
-                decoration: const InputDecoration(hintText: "Add a step manually..."),
-              ),
-            ),
-            IconButton(
-              onPressed: () {
-                viewModel.onAddSubtask(subtaskController.text);
-                subtaskController.clear();
-              },
-              icon: const Icon(Icons.add),
-            ),
-          ],
-        ),
-        const SizedBox(height: 12),
-        ...viewModel.subtasks.asMap().entries.map((entry) {
-          final index = entry.key;
-          final sub = entry.value;
-          return ListTile(
-            leading: Checkbox(
-              value: sub.isCompleted,
-              onChanged: (value) => viewModel.onToggleSubtask(index, value ?? false),
-            ),
-            title: Text(sub.title, style: TextStyle(decoration: sub.isCompleted ? TextDecoration.lineThrough : null)),
-            trailing: IconButton(
-              onPressed: () => viewModel.onDeleteSubtask(index),
-              icon: const Icon(Icons.delete, color: Colors.red, size: 20),
-            ),
-          );
-        }),
-      ],
-    );
-  }
-
-  Widget _buildSectionCard(BuildContext context, {required String title, IconData? icon, required Widget child}) {
-    return Card(
-      shape: RoundedCornerShape(16),
-      child: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                if (icon != null) ...[
-                  Icon(icon, size: 20, color: Theme.of(context).primaryColor),
-                  const SizedBox(width: 8),
-                ],
-                Text(title, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
-              ],
-            ),
-            const SizedBox(height: 12),
-            child,
-          ],
-        ),
+  void _showConvertToProjectConfirm(BuildContext context, AddEditTaskViewModel viewModel) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Convert to Project?'),
+        content: const Text('This will turn this task into a Project. All its subtasks will automatically become tasks of the new project.'),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(context), child: const Text('Cancel')),
+          ElevatedButton(
+            onPressed: () async {
+              await viewModel.convertToProject();
+              if (context.mounted) {
+                Navigator.pop(context); // Close dialog
+                Navigator.pop(context); // Go back
+              }
+            },
+            child: const Text('Convert'),
+          ),
+        ],
       ),
     );
   }
 
-  Widget _buildPrioritySelector(BuildContext context, AddEditTaskViewModel viewModel) {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceAround,
-      children: [1, 2, 3].map((p) {
-        final isSelected = viewModel.priority == p;
-        return ChoiceChip(
-          label: Text('Priority $p'),
-          selected: isSelected,
-          onSelected: (_) => viewModel.onPriorityChange(p),
-        );
-      }).toList(),
+  void _showDeleteConfirm(BuildContext context, AddEditTaskViewModel viewModel) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Delete Task?'),
+        content: const Text('This will permanently delete this task and all its subtasks.'),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(context), child: const Text('Cancel')),
+          TextButton(
+            onPressed: () async {
+              await viewModel.deleteTask();
+              if (context.mounted) {
+                Navigator.pop(context); // Close dialog
+                Navigator.pop(context); // Go back
+              }
+            },
+            child: const Text('Delete', style: TextStyle(color: Colors.red)),
+          ),
+        ],
+      ),
     );
   }
 
-  Widget _buildDateTimePicker(BuildContext context, AddEditTaskViewModel viewModel) {
-    return Row(
-      children: [
-        Expanded(
-          child: InkWell(
-            onTap: () async {
-              final date = await showDatePicker(
-                context: context,
-                initialDate: viewModel.selectedDate ?? DateTime.now(),
-                firstDate: DateTime.now().subtract(const Duration(days: 365)),
-                lastDate: DateTime.now().add(const Duration(days: 365 * 5)),
-              );
-              if (date != null) viewModel.onDateChange(date);
-            },
-            child: Padding(
-              padding: const EdgeInsets.symmetric(vertical: 8.0),
-              child: Text(
-                viewModel.selectedDate == null ? 'Select Date' : DateFormat('MMM dd, yyyy').format(viewModel.selectedDate!),
-                style: const TextStyle(fontSize: 16),
-              ),
+  Widget _buildNarrowLayout(BuildContext context, AddEditTaskViewModel viewModel) {
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(16.0),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          MainInfoSection(
+            title: viewModel.title,
+            priority: viewModel.priority,
+            onTitleChange: viewModel.onTitleChange,
+            onPriorityChange: viewModel.onPriorityChange,
+          ),
+          const SizedBox(height: 16),
+          ProjectSelector(
+            parentId: viewModel.parentId,
+            availableProjects: viewModel.availableProjects,
+            onParentChange: viewModel.onParentChange,
+          ),
+          const SizedBox(height: 16),
+          SchedulingSection(
+            selectedDate: viewModel.selectedDate,
+            selectedTime: viewModel.selectedTime,
+            durationMinutes: viewModel.durationMinutes,
+            isCustomDuration: viewModel.isCustomDuration,
+            onDateChange: viewModel.onDateChange,
+            onTimeChange: viewModel.onTimeChange,
+            setDuration: viewModel.setDuration,
+            clearSchedule: viewModel.clearSchedule,
+          ),
+          const SizedBox(height: 16),
+          StrategySection(
+            isStrategy: viewModel.isStrategy,
+            deadline: viewModel.deadline,
+            onStrategyChange: viewModel.onStrategyChange,
+            onDeadlineChange: viewModel.onDeadlineChange,
+          ),
+          const SizedBox(height: 16),
+          NotesSection(
+            description: viewModel.description,
+            onDescriptionChange: viewModel.onDescriptionChange,
+          ),
+          const SizedBox(height: 16),
+          SectionCard(
+            title: 'Checklist',
+            icon: Icons.list,
+            child: SubtaskSection(
+              subtasks: viewModel.subtasks,
+              isGeneratingChecklist: viewModel.isGeneratingChecklist,
+              generateAIChecklist: viewModel.generateAIChecklist,
+              onAddSubtask: viewModel.onAddSubtask,
+              onToggleSubtask: viewModel.onToggleSubtask,
+              onDeleteSubtask: viewModel.onDeleteSubtask,
             ),
           ),
-        ),
-        const VerticalDivider(),
-        Expanded(
-          child: InkWell(
-            onTap: () async {
-              final time = await showTimePicker(
-                context: context,
-                initialTime: viewModel.selectedTime ?? TimeOfDay.now(),
-              );
-              if (time != null) viewModel.onTimeChange(time);
-            },
-            child: Padding(
-              padding: const EdgeInsets.symmetric(vertical: 8.0),
-              child: Text(
-                viewModel.selectedTime == null ? 'Select Time' : viewModel.selectedTime!.format(context),
-                style: const TextStyle(fontSize: 16),
-              ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildWideLayout(BuildContext context, AddEditTaskViewModel viewModel) {
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(32.0),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                MainInfoSection(
+                  title: viewModel.title,
+                  priority: viewModel.priority,
+                  onTitleChange: viewModel.onTitleChange,
+                  onPriorityChange: viewModel.onPriorityChange,
+                ),
+                const SizedBox(height: 24),
+                ProjectSelector(
+                  parentId: viewModel.parentId,
+                  availableProjects: viewModel.availableProjects,
+                  onParentChange: viewModel.onParentChange,
+                ),
+                const SizedBox(height: 24),
+                NotesSection(
+                  description: viewModel.description,
+                  onDescriptionChange: viewModel.onDescriptionChange,
+                ),
+              ],
             ),
           ),
-        ),
-      ],
+          const SizedBox(width: 24),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                SchedulingSection(
+                  selectedDate: viewModel.selectedDate,
+                  selectedTime: viewModel.selectedTime,
+                  durationMinutes: viewModel.durationMinutes,
+                  isCustomDuration: viewModel.isCustomDuration,
+                  onDateChange: viewModel.onDateChange,
+                  onTimeChange: viewModel.onTimeChange,
+                  setDuration: viewModel.setDuration,
+                  clearSchedule: viewModel.clearSchedule,
+                ),
+                const SizedBox(height: 24),
+                StrategySection(
+                  isStrategy: viewModel.isStrategy,
+                  deadline: viewModel.deadline,
+                  onStrategyChange: viewModel.onStrategyChange,
+                  onDeadlineChange: viewModel.onDeadlineChange,
+                ),
+                const SizedBox(height: 24),
+                SectionCard(
+                  title: 'Checklist',
+                  icon: Icons.list,
+                  child: SubtaskSection(
+                    subtasks: viewModel.subtasks,
+                    isGeneratingChecklist: viewModel.isGeneratingChecklist,
+                    generateAIChecklist: viewModel.generateAIChecklist,
+                    onAddSubtask: viewModel.onAddSubtask,
+                    onToggleSubtask: viewModel.onToggleSubtask,
+                    onDeleteSubtask: viewModel.onDeleteSubtask,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
     );
   }
-
-  Widget _buildDurationSlider(BuildContext context, AddEditTaskViewModel viewModel) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text('Duration: ${viewModel.durationMinutes} minutes'),
-        Slider(
-          value: viewModel.durationMinutes.toDouble(),
-          min: 5,
-          max: 120,
-          divisions: 23,
-          onChanged: (value) => viewModel.onDurationChange(value.round()),
-        ),
-      ],
-    );
-  }
-}
-
-class RoundedCornerShape extends RoundedRectangleBorder {
-  RoundedCornerShape(double radius) : super(borderRadius: BorderRadius.all(Radius.circular(radius)));
 }

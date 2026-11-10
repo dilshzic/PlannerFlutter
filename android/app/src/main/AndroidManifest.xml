@@ -1,6 +1,6 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
     <application
-        android:label="planner"
+        android:label="Narwhal"
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher">
         <activity
@@ -24,7 +24,123 @@
                 <action android:name="android.intent.action.MAIN"/>
                 <category android:name="android.intent.category.LAUNCHER"/>
             </intent-filter>
+            <!-- Deep linking for Narwhal and Home Screen Widgets -->
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW"/>
+                <category android:name="android.intent.category.DEFAULT"/>
+                <category android:name="android.intent.category.BROWSABLE"/>
+                <data android:scheme="planner"/>
+                <data android:scheme="narwhal"/>
+            </intent-filter>
+            <intent-filter>
+                <action android:name="es.antonborri.home_widget.action.LAUNCH"/>
+                <category android:name="android.intent.category.DEFAULT"/>
+                <data android:scheme="planner"/>
+                <data android:scheme="narwhal"/>
+            </intent-filter>
         </activity>
+
+        <!-- Today's Agenda List Widget Provider -->
+        <receiver
+            android:name=".widget.TodayTasksWidgetProvider"
+            android:label="@string/widget_today_tasks_label"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+            </intent-filter>
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/today_tasks_widget_info" />
+        </receiver>
+
+        <!-- RemoteViews Service for Today's Agenda ListView -->
+        <service
+            android:name=".widget.TodayTasksViewsService"
+            android:permission="android.permission.BIND_REMOTEVIEWS"
+            android:exported="false" />
+
+        <!-- Action Receiver for List Item Clicks -->
+        <receiver
+            android:name=".widget.TodayTasksActionReceiver"
+            android:exported="false">
+            <intent-filter>
+                <action android:name="com.algorithmx.planner.ACTION_TOGGLE_TASK" />
+                <action android:name="com.algorithmx.planner.ACTION_OPEN_TASK" />
+            </intent-filter>
+        </receiver>
+
+        <!-- Daily Summary 2x2 Widget Provider -->
+        <receiver
+            android:name=".widget.DailySummaryWidgetProvider"
+            android:label="@string/widget_daily_summary_label"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+            </intent-filter>
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/daily_summary_widget_info" />
+        </receiver>
+
+        <!-- Quick Actions 4x1 Widget Provider -->
+        <receiver
+            android:name=".widget.QuickActionsWidgetProvider"
+            android:label="@string/widget_quick_actions_label"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+            </intent-filter>
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/quick_actions_widget_info" />
+        </receiver>
+
+        <!-- Event Countdown Hour Counter Widget Provider -->
+        <receiver
+            android:name=".widget.EventCountdownWidgetProvider"
+            android:label="@string/widget_event_countdown_label"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+            </intent-filter>
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/event_countdown_widget_info" />
+        </receiver>
+
+        <!-- Action Receiver for Event Countdown Widget -->
+        <receiver
+            android:name=".widget.EventCountdownActionReceiver"
+            android:exported="false">
+            <intent-filter>
+                <action android:name="com.algorithmx.planner.ACTION_CYCLE_EVENT" />
+            </intent-filter>
+        </receiver>
+
+        <!-- Monthly Calendar Widget Provider -->
+        <receiver
+            android:name=".widget.CalendarWidgetProvider"
+            android:label="@string/widget_calendar_label"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+            </intent-filter>
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/calendar_widget_info" />
+        </receiver>
+
+        <!-- Action Receiver for Calendar Month Navigation -->
+        <receiver
+            android:name=".widget.CalendarActionReceiver"
+            android:exported="false">
+            <intent-filter>
+                <action android:name="com.algorithmx.planner.ACTION_PREV_MONTH" />
+                <action android:name="com.algorithmx.planner.ACTION_NEXT_MONTH" />
+                <action android:name="com.algorithmx.planner.ACTION_RESET_MONTH" />
+            </intent-filter>
+        </receiver>
+
         <!-- Don't delete the meta-data below.
              This is used by the Flutter tool to generate GeneratedPluginRegistrant.java -->
         <meta-data

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:narwhal/ui/components/narwhal_icon.dart';
 
 class QuickAddSection extends StatelessWidget {
   final String text;
@@ -38,7 +39,7 @@ class QuickAddSection extends StatelessWidget {
   }
 }
 
-class OutlinedTextField extends StatelessWidget {
+class OutlinedTextField extends StatefulWidget {
   final String text;
   final ValueChanged<String> onChanged;
   final bool isLoading;
@@ -51,21 +52,55 @@ class OutlinedTextField extends StatelessWidget {
   });
 
   @override
+  State<OutlinedTextField> createState() => _OutlinedTextFieldState();
+}
+
+class _OutlinedTextFieldState extends State<OutlinedTextField> {
+  late final TextEditingController _controller;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = TextEditingController(text: widget.text);
+  }
+
+  @override
+  void didUpdateWidget(covariant OutlinedTextField oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.text != _controller.text) {
+      _controller.value = TextEditingValue(
+        text: widget.text,
+        selection: TextSelection.collapsed(offset: widget.text.length),
+      );
+    }
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
     return TextField(
-      onChanged: onChanged,
-      controller: TextEditingController(text: text)..selection = TextSelection.collapsed(offset: text.length),
+      onChanged: widget.onChanged,
+      controller: _controller,
       decoration: InputDecoration(
-        hintText: "AI Quick Add (e.g. 'Study Cardio 2h')",
+        hintText: "Narwhal Quick Add (e.g. 'Study Cardio 2h')",
+        prefixIcon: const Padding(
+          padding: EdgeInsets.all(12.0),
+          child: NarwhalIcon(size: 20),
+        ),
         border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-        suffixIcon: isLoading
+        suffixIcon: widget.isLoading
             ? const Padding(
                 padding: EdgeInsets.all(12.0),
                 child: CircularProgressIndicator(strokeWidth: 2),
               )
             : null,
       ),
-      onSubmitted: (_) => isLoading ? null : (text.isNotEmpty ? () => {} : null), // placeholder
+      onSubmitted: (_) => widget.isLoading ? null : (widget.text.isNotEmpty ? () => {} : null), // placeholder
     );
   }
 }

@@ -1,63 +1,50 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
-import 'package:planner/data/entity/task.dart';
-import 'package:planner/data/repository/task_repository.dart';
+import 'package:flutter_core_entities/task_node.dart';
+import 'package:narwhal/data/repository/task_node_repository.dart';
 
 class TriageViewModel extends ChangeNotifier {
-  final TaskRepository _repository;
-  List<Task> backlogTasks = [];
+  final TaskNodeRepository _repository;
+  StreamSubscription? _taskSubscription;
+  List<TaskNode> backlogTasks = [];
 
   TriageViewModel(this._repository) {
     loadBacklog();
+    _taskSubscription = _repository.nodeUpdates.listen((_) => loadBacklog());
+  }
+
+  @override
+  void dispose() {
+    _taskSubscription?.cancel();
+    super.dispose();
   }
 
   Future<void> loadBacklog() async {
-    final tasks = await _repository.getAllTasks();
+    final tasks = await _repository.getNodesByType(NodeType.task);
     // Backlog tasks are those that are not completed and have no scheduled date
     backlogTasks = tasks.where((t) => !t.isCompleted && t.scheduledDate == null).toList();
     notifyListeners();
   }
 
-  Future<void> onMoveToToday(Task task) async {
+  Future<void> onMoveToToday(TaskNode task) async {
     final now = DateTime.now();
-    final updatedTask = _updateTaskDate(task, DateTime(now.year, now.month, now.day, 9, 0)); // Default to 9 AM today
-    await _repository.updateTask(updatedTask);
-    loadBacklog();
+    final updatedTask = task.copyWith(
+      scheduledDate: DateTime(now.year, now.month, now.day, 9, 0),
+      updatedAt: DateTime.now().millisecondsSinceEpoch,
+    );
+    await _repository.upsertNode(updatedTask);
   }
 
-  Future<void> onMoveToTomorrow(Task task) async {
+  Future<void> onMoveToTomorrow(TaskNode task) async {
     final tomorrow = DateTime.now().add(const Duration(days: 1));
-    final updatedTask = _updateTaskDate(task, DateTime(tomorrow.year, tomorrow.month, tomorrow.day, 9, 0)); // Default to 9 AM tomorrow
-    await _repository.updateTask(updatedTask);
-    loadBacklog();
+    final updatedTask = task.copyWith(
+      scheduledDate: DateTime(tomorrow.year, tomorrow.month, tomorrow.day, 9, 0),
+      updatedAt: DateTime.now().millisecondsSinceEpoch,
+    );
+    await _repository.upsertNode(updatedTask);
   }
 
   Future<void> onDeleteTask(String id) async {
-    await _repository.deleteTask(id);
-    loadBacklog();
-  }
-
-  Task _updateTaskDate(Task task, DateTime date) {
-    return Task(
-      id: task.id,
-      title: task.title,
-      description: task.description,
-      categoryId: task.categoryId,
-      priority: task.priority,
-      parentId: task.parentId,
-      isZone: task.isZone,
-      scheduledDate: date,
-      startDateTime: task.startDateTime,
-      endDateTime: task.endDateTime,
-      completedDate: task.completedDate,
-      deadline: task.deadline,
-      durationMinutes: task.durationMinutes,
-      recurrenceRule: task.recurrenceRule,
-      lastGeneratedDate: task.lastGeneratedDate,
-      isCompleted: task.isCompleted,
-      estimatedBlocks: task.estimatedBlocks,
-      totalBlocksSpent: task.totalBlocksSpent,
-      userId: task.userId,
-      updatedAt: DateTime.now().millisecondsSinceEpoch,
-    );
+    await _repository.deleteNode(id);
   }
 }

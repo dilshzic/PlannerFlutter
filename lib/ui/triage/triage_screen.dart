@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:planner/ui/triage/triage_view_model.dart';
-import 'package:planner/data/entity/task.dart';
-import 'package:planner/data/repository/task_repository.dart';
-import 'package:planner/ui/addedit/add_edit_task_screen.dart';
+import 'package:narwhal/ui/triage/triage_view_model.dart';
+import 'package:flutter_core_entities/task_node.dart';
+import 'package:narwhal/data/repository/task_node_repository.dart';
+import 'package:narwhal/ui/addedit/add_edit_task_screen.dart';
 
 class TriageScreen extends StatelessWidget {
   const TriageScreen({super.key});
@@ -11,7 +11,7 @@ class TriageScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return ChangeNotifierProvider(
-      create: (_) => TriageViewModel(context.read<TaskRepository>()),
+      create: (_) => TriageViewModel(context.read<TaskNodeRepository>()),
       child: Consumer<TriageViewModel>(
         builder: (context, viewModel, child) {
           return Scaffold(
@@ -67,7 +67,7 @@ class TriageScreen extends StatelessWidget {
 }
 
 class _TriageListCard extends StatelessWidget {
-  final Task task;
+  final TaskNode task;
   final VoidCallback onMoveToday;
   final VoidCallback onMoveTomorrow;
   final VoidCallback onDelete;
